@@ -228,6 +228,14 @@ config CPU_FREQ_GOV_SMARTASS
 	  'smartass' - a "smart" optimized governor for the hero! also good for
 	  for other lowerend devices.
 
+config CPU_FREQ_GOV_SMARTASS2
+	tristate "'smartass2' cpufreq governor"
+	depends on CPU_FREQ
+	help
+	  'Smartass2' - a "slightly more agressive smartass" governor!
+ 
+	  If in doubt, say N.
+
 config CPU_FREQ_GOV_SAVAGEDZEN
 	tristate "'savagedzen' cpufreq governor"
 	depends on CPU_FREQ
