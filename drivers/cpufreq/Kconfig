@@ -142,7 +142,9 @@ config CPU_FREQ_GOV_PERFORMANCE
 	  To compile this driver as a module, choose M here: the
 	  module will be called cpufreq_performance.
 
-	  If in doubt, say Y.config CPU_FREQ_GOV_SMARTASS
+	  If in doubt, say Y.
+
+config CPU_FREQ_GOV_SMARTASS
 	tristate "'smartass' cpufreq governor"
 	depends on CPU_FREQ
 	help
