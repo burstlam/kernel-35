@@ -28,7 +28,6 @@ unsigned int __machine_arch_type;
 
 #include <asm/unaligned.h>
 
-
 static void putstr(const char *ptr);
 extern void error(char *x);
 
@@ -225,7 +224,7 @@ void error(char *x)
 
 asmlinkage void __div0(void)
 {
-	error("Attempting division by 0!");
+     error("Attempting division by 0!");
 }
 
 extern void do_decompress(u8 *input, int len, u8 *output, void (*error)(char *x));
@@ -233,12 +232,12 @@ extern void do_decompress(u8 *input, int len, u8 *output, void (*error)(char *x)
 
 unsigned long
 decompress_kernel(unsigned long output_start, unsigned long free_mem_ptr_p,
-		unsigned long free_mem_ptr_end_p,
-		int arch_id)
+               unsigned long free_mem_ptr_end_p,
+               int arch_id)
 {
 	unsigned char *tmp;
 
-	output_data		= (unsigned char *)output_start;
+	output_data             = (unsigned char *)output_start;
 	free_mem_ptr		= free_mem_ptr_p;
 	free_mem_end_ptr	= free_mem_ptr_end_p;
 	__machine_arch_type	= arch_id;
