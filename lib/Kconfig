@@ -121,6 +121,8 @@ config DECOMPRESS_LZO
 	select LZO_DECOMPRESS
 	tristate
 
+source "lib/xz/Kconfig"
+
 #
 # Generic allocator support is selected if needed
 #
