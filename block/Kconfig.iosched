@@ -101,6 +101,7 @@ config DEFAULT_IOSCHED
 	default "cfq" if DEFAULT_CFQ
 	default "noop" if DEFAULT_NOOP
 	default "vr" if DEFAULT_VR
+	default ""bfq" if DEFAULT_BFQ
 
 endmenu
 
