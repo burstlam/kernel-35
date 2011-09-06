@@ -45,9 +45,6 @@
 #define PLLn_MODE(n)	(MSM_CLK_CTL_BASE + 0x300 + 28 * (n))
 #define PLLn_L_VAL(n)	(MSM_CLK_CTL_BASE + 0x304 + 28 * (n))
 
-/* Enable/Disable Aggressive Overclocking */
-#define OVERCLOCK_AHB
-
 #define dprintk(msg...) \
 	cpufreq_debug_printk(CPUFREQ_DEBUG_DRIVER, "cpufreq-msm", msg)
 
@@ -210,7 +207,7 @@ static struct clkctl_acpu_speed pll0_960_pll1_245_pll2_1200[] = {
 	{ 0, 200000, ACPU_PLL_2, 2, 5,  66667, 2, 4,  61440 },
 	{ 1, 245760, ACPU_PLL_1, 1, 0, 122880, 1, 4,  61440 },
 	{ 1, 320000, ACPU_PLL_0, 4, 2, 160000, 1, 5, 122880 },
-#ifndef OVERCLOCK_AHB
+#ifndef CONFIG_MSM_CPU_FREQ_OVERCLOCK_AHB
 /* Conservative AHB overclocking */
 	{ 0, 403200, ACPU_PLL_2, 2, 2, 134400, 2, 5, 122880 },
 	{ 1, 480000, ACPU_PLL_0, 4, 1, 160000, 2, 6, 122880 },
@@ -248,7 +245,7 @@ static struct clkctl_acpu_speed pll0_960_pll1_245_pll2_1200[] = {
 	{ 1, 806400, ACPU_PLL_0, 4, 0, 403200, 1, 7, 200000 },
 //	{ 1, 825600, ACPU_PLL_0, 4, 0, 412800, 1, 7, 200000 },
 //	{ 1, 844800, ACPU_PLL_0, 4, 0, 422400, 1, 7, 200000 },
-#endif
+#endif /* CONFIG_MSM_CPU_FREQ_OVERCLOCK_AHB */
 	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0, 0, 0}, {0, 0, 0} }
 };
 
