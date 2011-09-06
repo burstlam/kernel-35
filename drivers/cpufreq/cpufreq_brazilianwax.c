@@ -102,7 +102,7 @@ static unsigned int sleep_max_freq;
  * The frequency to set when waking up from sleep.
  * When sleep_max_freq=0 this will have no effect.
  */
-#define DEFAULT_SLEEP_WAKEUP_FREQ 998400
+#define DEFAULT_SLEEP_WAKEUP_FREQ 604800
 static unsigned int sleep_wakeup_freq;
 
 #define UP_THRESHOLD_FREQ 1800000
@@ -163,7 +163,7 @@ static int cpufreq_governor_brazilianwax(struct cpufreq_policy *policy,
 static
 #endif
 struct cpufreq_governor cpufreq_gov_brazilianwax = {
-        .name = "brazilianwax",
+        .name = "Brazilianwax",
         .governor = cpufreq_governor_brazilianwax,
         .max_transition_latency = 9000000,
         .owner = THIS_MODULE,
