@@ -202,7 +202,8 @@ static int ashmem_release(struct inode *ignored, struct file *file)
 	struct ashmem_area *asma = file->private_data;
 	struct ashmem_range *range, *next;
 
-	mutex_lock(&ashmem_mutex);
+	if (!mutex_trylock(&ashmem_mutex))
+		return -1;
 	list_for_each_entry_safe(range, next, &asma->unpinned_list, unpinned)
 		range_del(range);
 	mutex_unlock(&ashmem_mutex);
@@ -669,7 +670,7 @@ static unsigned int kgsl_virtaddr_to_physaddr(unsigned int virtaddr)
 }
 #endif
 
-static int ashmem_flush_cache_range(struct ashmem_area *asma)
+static int ashmem_flush_cache_range(struct ashmem_area *asma, unsigned long cmd)
 {
 #ifdef CONFIG_OUTER_CACHE
 	unsigned long end;
@@ -687,7 +688,19 @@ static int ashmem_flush_cache_range(struct ashmem_area *asma)
 		goto done;
 	}
 
-	flush_cache_user_range(addr, addr + size);
+	switch (cmd) {
+	case ASHMEM_CACHE_FLUSH_RANGE:
+		dmac_flush_range((const void *)addr,
+			(const void *)(addr + size));
+		break;
+	case ASHMEM_CACHE_CLEAN_RANGE:
+		dmac_clean_range((const void *)addr,
+			(const void *)(addr + size));
+		break;
+	default:
+		result = -EINVAL;
+		goto done;
+	}
 #ifdef CONFIG_OUTER_CACHE
 	for (end = addr; end < (addr + size); end += PAGE_SIZE) {
 		unsigned long physaddr;
@@ -697,7 +710,14 @@ static int ashmem_flush_cache_range(struct ashmem_area *asma)
 			goto done;
 		}
 
-		outer_flush_range(physaddr, physaddr + PAGE_SIZE);
+		switch (cmd) {
+		case ASHMEM_CACHE_FLUSH_RANGE:
+			outer_flush_range(physaddr, physaddr + PAGE_SIZE);
+			break;
+		case ASHMEM_CACHE_CLEAN_RANGE:
+			outer_clean_range(physaddr, physaddr + PAGE_SIZE);
+			break;
+		}
 	}
 	mb();
 #endif
@@ -747,7 +767,8 @@ static long ashmem_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		}
 		break;
 	case ASHMEM_CACHE_FLUSH_RANGE:
-		ret = ashmem_flush_cache_range(asma);
+	case ASHMEM_CACHE_CLEAN_RANGE:
+		ret = ashmem_flush_cache_range(asma, cmd);
 		break;
 	}
 
