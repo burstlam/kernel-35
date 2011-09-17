@@ -332,13 +332,13 @@ CHECK		= sparse
 
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		  -Wbitwise -Wno-return-void $(CF)
-MODFLAGS	= -DMODULE
+MODFLAGS	= -O2 -fomit-frame-pointer -pipe -ffast-math -mtune=arm1136jf-s -mfpu=vfp -DMODULE
 CFLAGS_MODULE   = $(MODFLAGS)
 AFLAGS_MODULE   = $(MODFLAGS)
 LDFLAGS_MODULE  = -T $(srctree)/scripts/module-common.lds
-CFLAGS_KERNEL	=
-AFLAGS_KERNEL	=
-CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage
+CFLAGS_KERNEL	= -O2 -fomit-frame-pointer -pipe -ffast-math -mtune=arm1136jf-s -mfpu=vfp
+AFLAGS_KERNEL	= -O2 -fomit-frame-pointer -pipe -ffast-math -mtune=arm1136jf-s -mfpu=vfp
+CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage -O2 -fomit-frame-pointer -pipe -ffast-math -mtune=arm1136jf-s -mfpu=vfp
 
 
 # Use LINUXINCLUDE when you must reference the include/ directory.
@@ -353,7 +353,7 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -fno-strict-aliasing -fno-common \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
-		   -fno-delete-null-pointer-checks
+		   -fno-delete-null-pointer-checks -O2 -fomit-frame-pointer -pipe -ffast-math -mtune=arm1136jf-s -mfpu=vfp
 KBUILD_AFLAGS   := -D__ASSEMBLY__
 
 # Read KERNELRELEASE from include/config/kernel.release (if it exists)
