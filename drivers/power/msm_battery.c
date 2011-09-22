@@ -464,13 +464,13 @@ static int msm_batt_power_get_property(struct power_supply *psy,
         val->intval = msm_batt_info.batt_technology;
         break;
     case POWER_SUPPLY_PROP_VOLTAGE_MAX_DESIGN:
-        val->intval = msm_batt_info.voltage_max_design*1000;
+        val->intval = msm_batt_info.voltage_max_design;
         break;
     case POWER_SUPPLY_PROP_VOLTAGE_MIN_DESIGN:
-        val->intval = msm_batt_info.voltage_min_design*1000;
+        val->intval = msm_batt_info.voltage_min_design;
         break;
     case POWER_SUPPLY_PROP_VOLTAGE_NOW:
-        val->intval = msm_batt_info.battery_voltage*1000;
+        val->intval = msm_batt_info.battery_voltage;
         break;
     case POWER_SUPPLY_PROP_CAPACITY:
 #ifdef	ZTE_PLATFORM_NOT_SHUTDOWN_WHILE_PERCENTAGE_0
@@ -655,7 +655,7 @@ static int msm_batt_get_batt_chg_status_v1(void)
             rep_batt_chg.battery_voltage=gaugereadvalue&0xffff;
 #endif
         }
-	 else	//chenchongbao.20110713_1  如果读电量计出错，则采用上次电量计数据
+	 else	//chenchongbao.20110713_1  use last time battery readings if read fail
 	{
 		gauge_voltage = gauge_old_voltage;
 		rep_batt_chg.battery_voltage=gauge_voltage;
@@ -675,7 +675,7 @@ static int msm_batt_get_batt_chg_status_v1(void)
 				rep_batt_chg.battery_capacity=0;
 			}
 			//else use arm9 capacity data!
-			else	//chenchongbao.20110713_1	如果没有如此处理，将导致电量由0跳变到ARM9 的容量值比如3% !!!
+			else	//chenchongbao.20110713_1 : comment out to avoid arm9 battery scale
 			{
 				if(rep_batt_chg.battery_capacity!=0){
 					rep_batt_chg.battery_capacity=1;	
@@ -690,7 +690,7 @@ static int msm_batt_get_batt_chg_status_v1(void)
             rep_batt_chg.battery_capacity=gaugereadvalue&0xff;
 #endif
         }
-	else	//chenchongbao.20110713_1  如果读电量计出错，则采用上次电量计数据
+	else	//chenchongbao.20110713_1  use last time battery readings if read fail
 	{
 		gauge_capacity = gauge_old_capacity;
 		rep_batt_chg.battery_capacity=gauge_capacity;
@@ -702,7 +702,7 @@ static int msm_batt_get_batt_chg_status_v1(void)
 #ifdef ZTE_GAUGE_OPTIMIZE_FEATURE
            	gauge_status++; 
             //gaugereadvalue |= 0xFFFF0000;	//chenchongbao.2011.6.7
-            if(gaugereadvalue & 0x8000)		//chenchongbao.20110713_1 解决负值问题
+            if(gaugereadvalue & 0x8000)		//chenchongbao.20110713_1 solve negative readings
 				gaugereadvalue |= 0xFFFF0000;
 		gauge_current=(int)gaugereadvalue;
 #endif
@@ -759,10 +759,10 @@ static int msm_batt_get_batt_chg_status_v1(void)
 #endif	//ZTE_GAUGE_OPTIMIZE_FEATURE
 
 
-//chenchongbao.2011.5.25 : 用于处理连接USB 时手机大电流造成的掉电关机反复重启问题!
+//chenchongbao.2011.5.25 : solve reboot issue if usb plug in
 
 if(  ( (rep_batt_chg.charger_type == CHARGER_TYPE_USB_PC) ||(rep_batt_chg.charger_type == CHARGER_TYPE_USB_WALL) )
-		//(rep_batt_chg.charger_type != CHARGER_TYPE_NONE)  V9  默认为NONE! 为了避免出现invalid 类型, 因此采用上述两个条件!
+		//(rep_batt_chg.charger_type != CHARGER_TYPE_NONE)  default to none for V9 and set to avoid invalid readings 
 	&& (rep_batt_chg.battery_capacity == 0) && (rep_batt_chg.battery_voltage < 3400) )
 {
 	low_power_cnt ++;
