@@ -23,78 +23,19 @@ config CONSTRUCTORS
 
 menu "General setup"
 
-choice
-	prompt "CPU Scheduler"
-	default SCHED_BFS
-	---help---
-	  Select the CPU Scheduler to be used.
-
 config SCHED_BFS
 	bool "BFS cpu scheduler"
 	---help---
 	  The Brain Fuck CPU Scheduler for excellent interactivity and
 	  responsiveness on the desktop and solid scalability on normal
-          hardware. Not recommended for 4096 CPUs.
+	  hardware. Not recommended for 4096 CPUs.
 
 	  Currently incompatible with the Group CPU scheduler, and RCU TORTURE
-          TEST so these options are disabled.
+	  TEST so these options are disabled.
 
-          Say Y here.
+	  Say Y here.
 
-config SCHED_CFS
-	bool "CFS cpu scheduler"
-	---help---
-	This is the default cpu scheduler found in the upstream kernel.
-endchoice
-
-config SCHED_BFS_RR
-	int "BFS rr_interval (in ms)"
-	depends on SCHED_BFS
-	range 1 5000
-	default 6
-	---help---
-	  This is the default rr_interval value that bfs will use. Set to 6ms 
-	  by default because that is approximately the amount of time the human
-	  eye can register changes. Acceptable values are 1-5000. In addition,
-	  this value scales with the number of CPUs and is also adjustable via
-	  the /proc interface.
-
-	  Choose 3ms for an interactive/responsive desktop
-	  If unsure, choose 6ms
-
-config SCHED_BFS_AUTOISO
-	bool "Automatically use SCHED_ISO policy for X"
-	depends on SCHED_BFS
-	default n
-	---help---
-	  Selecting this option will automatically use the SCHED_ISO scheduling
-	  policy for X, resulting in an interactivity boost. This *may* cause 
-	  things like skipping sound on audio applications that are not run
-	  as SCHED_ISO.
-
-	  Tasks (including X) can be run as sched_iso manually using schedtool.
-
-config SCHED_CFS_BOOST
-	bool "Boost for Privileged tasks (CFS Boost)"
-	depends on !SCHED_BFS
-	default n
-	---help---
-	  This option instructs the kernel to guarantee more CPU time to
-	  X than to other tasks, which is useful if you want to have a
-	  faster desktop even under high system load.
-
-	  This option works by automatically boosting X's priority via
-	  renicing it to -10. NOTE: CFS does not suffer from "overscheduling"
-	  problems when X is reniced to -10, so this option is safe.           
-
-	  Say Y here if you are building a kernel for a desktop system.
-	  Say N here if you want X to be treated as a normal task.
-
-config SCHED_CFS_BOOST_VALUE
-	int "Nice value for privileged tasks"
-	depends on SCHED_CFS_BOOST
-	range -20 19
-	default -10
+	default y
 
 config EXPERIMENTAL
 	bool "Prompt for development and/or incomplete code/drivers"
