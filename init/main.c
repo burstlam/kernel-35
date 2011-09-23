@@ -832,8 +832,8 @@ static noinline int init_post(void)
 	unlock_kernel();
 	mark_rodata_ro();
 	system_state = SYSTEM_RUNNING;
-	
-	print_scheduler_version();
+	numa_default_policy();
+
 
 	current->signal->flags |= SIGNAL_UNKILLABLE;
 
