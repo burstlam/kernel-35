@@ -1596,9 +1596,6 @@ static inline void remove_cpu(unsigned long cpu)
 }
 #endif /* CONFIG_SCHED_BFS */
 
-/* CFS and BFS */
-extern int above_background_load(void);
-
 /* Future-safe accessor for struct task_struct's cpus_allowed. */
 #define tsk_cpus_allowed(tsk) (&(tsk)->cpus_allowed)
 
