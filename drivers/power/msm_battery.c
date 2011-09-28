@@ -89,7 +89,7 @@ static int wl_initialized = 0;//The rpc occur anytime ,so ,we must make sure tha
 
 /* liu.yijian@zte.com.cn 20091127 _FILE_INDEX */
 #define MSM_BATTERY_DEBUGX
-#ifdef MSM_BATTERY_DEBUGX
+//#ifdef MSM_BATTERY_DEBUGX
 #define DEBUG_MSM_BATTERY(fmt, args...)\
     do\
     {\
@@ -465,13 +465,13 @@ static int msm_batt_power_get_property(struct power_supply *psy,
         val->intval = msm_batt_info.batt_technology;
         break;
     case POWER_SUPPLY_PROP_VOLTAGE_MAX_DESIGN:
-        val->intval = msm_batt_info.voltage_max_design;
+        val->intval = msm_batt_info.voltage_max_design*1000;
         break;
     case POWER_SUPPLY_PROP_VOLTAGE_MIN_DESIGN:
-        val->intval = msm_batt_info.voltage_min_design;
+        val->intval = msm_batt_info.voltage_min_design*1000;
         break;
     case POWER_SUPPLY_PROP_VOLTAGE_NOW:
-        val->intval = msm_batt_info.battery_voltage;
+        val->intval = msm_batt_info.battery_voltage*1000;
         break;
     case POWER_SUPPLY_PROP_CAPACITY:
 #ifdef	ZTE_PLATFORM_NOT_SHUTDOWN_WHILE_PERCENTAGE_0
