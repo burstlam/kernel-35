@@ -14,18 +14,12 @@
 #include <linux/ctype.h>
 #include <linux/sched.h>
 #include <linux/slab.h>
-#include <linux/delay.h>
 #include <mach/pmic.h>
 
 #define ZYF_BL_TAG "[ZYF@pmic-leds]"
 
 #define MAX_PMIC_BL_LEVEL	16
-#define BLINK_LED_NUM   3
-
-
-bool RED_ON=0;
-bool GREEN_ON=0;
-bool AMBER_ON=0;
+#define BLINK_LED_NUM   2
 
 struct BLINK_LED_data{
        int blink_flag;
@@ -33,14 +27,14 @@ struct BLINK_LED_data{
 	int blink_on_time;  //ms
 	int blink_off_time;  //ms
 	struct timer_list timer;
-	struct work_struct work_led_on;
-	struct work_struct work_led_off;
+       struct work_struct work_led_on;
+       struct work_struct work_led_off;
 	struct led_classdev led;
 };
 
 struct STATUS_LED_data {
 	spinlock_t data_lock;
-	struct BLINK_LED_data blink_led[3];  /*green, red, amber */
+	struct BLINK_LED_data blink_led[2];  /*green, red */
 };
 
 struct STATUS_LED_data *STATUS_LED;
@@ -48,56 +42,30 @@ struct STATUS_LED_data *STATUS_LED;
 static void pmic_red_led_on(struct work_struct *work)
 {
        struct BLINK_LED_data *b_led = container_of(work, struct BLINK_LED_data, work_led_on);
-       if(AMBER_ON) STATUS_LED->blink_led[1].led.brightness = 0;
-	pmic_set_led_intensity(LED_RED, b_led->led.brightness / MAX_PMIC_BL_LEVEL);
-	RED_ON=1;
+	pmic_set_led_intensity(LED_KEYPAD, b_led->led.brightness / MAX_PMIC_BL_LEVEL);
 }
 
 static void pmic_red_led_off(struct work_struct *work)
 {
-	if(AMBER_ON) STATUS_LED->blink_led[1].led.brightness = 32;
-	else pmic_set_led_intensity(LED_RED, LED_OFF);
-
-	RED_ON=0;
+	pmic_set_led_intensity(LED_KEYPAD, LED_OFF);
 }
 
 static void pmic_green_led_on(struct work_struct *work)
 {
-	struct BLINK_LED_data *b_led = container_of(work, struct BLINK_LED_data, work_led_on);
-	if(AMBER_ON) STATUS_LED->blink_led[0].led.brightness = 0;
-	pmic_set_led_intensity(LED_GREEN, b_led->led.brightness / MAX_PMIC_BL_LEVEL);
-	GREEN_ON=1;
+       struct BLINK_LED_data *b_led = container_of(work, struct BLINK_LED_data, work_led_on);
+	pmic_set_led_intensity(LED_LCD, b_led->led.brightness / MAX_PMIC_BL_LEVEL);
 }
 
 static void pmic_green_led_off(struct work_struct *work)
 {
-	if(AMBER_ON) STATUS_LED->blink_led[0].led.brightness = 32;
-	else pmic_set_led_intensity(LED_GREEN, LED_OFF);
-	GREEN_ON=0;
+	pmic_set_led_intensity(LED_LCD, LED_OFF);
 }
 
-static void pmic_amber_led_on(struct work_struct *work)
-{
-       struct BLINK_LED_data *b_led = container_of(work, struct BLINK_LED_data, work_led_on);
-	pmic_set_led_intensity(LED_RED, b_led->led.brightness / MAX_PMIC_BL_LEVEL);
-	pmic_set_led_intensity(LED_GREEN, b_led->led.brightness / MAX_PMIC_BL_LEVEL);
-	AMBER_ON=1;
-}
-
-static void pmic_amber_led_off(struct work_struct *work)
-{
-	if(!RED_ON) pmic_set_led_intensity(LED_RED, LED_OFF);
-	if(!GREEN_ON) pmic_set_led_intensity(LED_GREEN, LED_OFF);
-	AMBER_ON=0;
-}
-
-static void (*func[6])(struct work_struct *work) = {
+static void (*func[4])(struct work_struct *work) = {
 	pmic_red_led_on,
 	pmic_red_led_off,
 	pmic_green_led_on,
 	pmic_green_led_off,
-	pmic_amber_led_on,
-	pmic_amber_led_off,
 };
 
 static void msm_pmic_bl_led_set(struct led_classdev *led_cdev,
@@ -106,12 +74,9 @@ static void msm_pmic_bl_led_set(struct led_classdev *led_cdev,
 	int ret;
 	
 	if (!strcmp(led_cdev->name, "red")) {
-		ret = pmic_set_led_intensity(LED_RED, value / MAX_PMIC_BL_LEVEL);
-	} else if (!strcmp(led_cdev->name, "green")) {
-		ret = pmic_set_led_intensity(LED_GREEN, value / MAX_PMIC_BL_LEVEL);
+		ret = pmic_set_led_intensity(LED_KEYPAD, value / MAX_PMIC_BL_LEVEL);
 	} else {
-		ret = pmic_set_led_intensity(LED_RED, value / MAX_PMIC_BL_LEVEL);
-		ret += pmic_set_led_intensity(LED_GREEN, value / MAX_PMIC_BL_LEVEL);
+		ret = pmic_set_led_intensity(LED_LCD, value / MAX_PMIC_BL_LEVEL);
 	}
 	
 	if (ret)
@@ -123,7 +88,7 @@ static void pmic_leds_timer(unsigned long arg)
       struct BLINK_LED_data *b_led = (struct BLINK_LED_data *)arg;
 
 
-		if(b_led->blink_flag)
+              if(b_led->blink_flag)
 		{
 		       if(b_led->blink_led_flag)
 		       {
@@ -155,10 +120,8 @@ static ssize_t led_blink_solid_show(struct device *dev,
 
 	if (!strcmp(led_cdev->name, "red"))
 		idx = 0;
-	else if (!strcmp(led_cdev->name, "green"))
-		idx = 1;
 	else
-		idx = 2;
+		idx = 1;
 
 	STATUS_LED = container_of(led_cdev, struct STATUS_LED_data, blink_led[idx].led);
 
@@ -184,10 +147,8 @@ static ssize_t led_blink_solid_store(struct device *dev,
 
 	if (!strcmp(led_cdev->name, "red"))
 		idx = 0;
-	else if (!strcmp(led_cdev->name, "green"))
-		idx = 1;
 	else
-		idx = 2;
+		idx = 1;
 
 	STATUS_LED = container_of(led_cdev, struct STATUS_LED_data, blink_led[idx].led);
 
@@ -204,7 +165,7 @@ static ssize_t led_blink_solid_store(struct device *dev,
 		if(0==state)
 		{
 		       STATUS_LED->blink_led[idx].blink_flag= 0;
-			pr_info(ZYF_BL_TAG "DISABLE %d led blink \n",idx);
+			pr_info(ZYF_BL_TAG "DISABLE %s led blink \n",idx?"green":"red");
 		}
 		else
 		{
@@ -212,7 +173,7 @@ static ssize_t led_blink_solid_store(struct device *dev,
 		       STATUS_LED->blink_led[idx].blink_led_flag = 0;
 			schedule_work(&STATUS_LED->blink_led[idx].work_led_off);
 			mod_timer(&STATUS_LED->blink_led[idx].timer,jiffies + msecs_to_jiffies(STATUS_LED->blink_led[idx].blink_off_time));
-			pr_info(ZYF_BL_TAG "ENABLE %d led blink \n",idx);
+			pr_info(ZYF_BL_TAG "ENABLE %s led blink \n",idx?"green":"red");
 		}
 		spin_unlock(&STATUS_LED->data_lock);
 	}
@@ -232,10 +193,8 @@ static ssize_t cpldled_grpfreq_show(struct device *dev,
 
 	if (!strcmp(led_cdev->name, "red"))
 		idx = 0;
-	else if (!strcmp(led_cdev->name, "green"))
-		idx = 1;
 	else
-		idx = 2;
+		idx = 1;
 
 	STATUS_LED = container_of(led_cdev, struct STATUS_LED_data, blink_led[idx].led);
 	return sprintf(buf, "blink_on_time = %u ms \n", STATUS_LED->blink_led[idx].blink_on_time);
@@ -256,10 +215,8 @@ static ssize_t cpldled_grpfreq_store(struct device *dev,
 
 	if (!strcmp(led_cdev->name, "red"))
 		idx = 0;
-	else if (!strcmp(led_cdev->name, "green"))
-		idx = 1;
 	else
-		idx = 2;
+		idx = 1;
 
 	STATUS_LED = container_of(led_cdev, struct STATUS_LED_data, blink_led[idx].led);
 
@@ -274,7 +231,7 @@ static ssize_t cpldled_grpfreq_store(struct device *dev,
 		ret = count;
 		spin_lock(&STATUS_LED->data_lock);
 		STATUS_LED->blink_led[idx].blink_on_time = state;  //in ms
-		pr_info(ZYF_BL_TAG "Set %d led blink_on_time=%d ms \n",idx,STATUS_LED->blink_led[idx].blink_on_time);
+		pr_info(ZYF_BL_TAG "Set %s led blink_on_time=%d ms \n",idx?"green":"red",STATUS_LED->blink_led[idx].blink_on_time);
 		spin_unlock(&STATUS_LED->data_lock);
 	}
 
@@ -293,11 +250,9 @@ static ssize_t cpldled_grppwm_show(struct device *dev,
 
 	if (!strcmp(led_cdev->name, "red"))
 		idx = 0;
-	else if (!strcmp(led_cdev->name, "green"))
-		idx = 1;
 	else
-		idx = 2;
-
+		idx = 1;
+	
 	STATUS_LED = container_of(led_cdev, struct STATUS_LED_data, blink_led[idx].led);
 	return sprintf(buf, "blink_off_time = %u ms\n", STATUS_LED->blink_led[idx].blink_off_time);
 }
@@ -317,10 +272,8 @@ static ssize_t cpldled_grppwm_store(struct device *dev,
 
 	if (!strcmp(led_cdev->name, "red"))
 		idx = 0;
-	else if (!strcmp(led_cdev->name, "green"))
-		idx = 1;
 	else
-		idx = 2;
+		idx = 1;
 
 	STATUS_LED = container_of(led_cdev, struct STATUS_LED_data, blink_led[idx].led);
 
@@ -335,7 +288,7 @@ static ssize_t cpldled_grppwm_store(struct device *dev,
 		ret = count;
 		spin_lock(&STATUS_LED->data_lock);
 		STATUS_LED->blink_led[idx].blink_off_time= state;  //in ms
-		pr_info(ZYF_BL_TAG "Set %d led blink_off_time=%d ms \n",idx,STATUS_LED->blink_led[idx].blink_off_time);
+		pr_info(ZYF_BL_TAG "Set %s led blink_off_time=%d ms \n",idx?"green":"red",STATUS_LED->blink_led[idx].blink_off_time);
 		spin_unlock(&STATUS_LED->data_lock);
 	}
 
@@ -370,16 +323,9 @@ static int msm_pmic_led_probe(struct platform_device *pdev)
 	STATUS_LED->blink_led[1].blink_on_time = 500;
 	STATUS_LED->blink_led[1].blink_off_time = 500;
 
-	STATUS_LED->blink_led[2].led.name = "amber";
-	STATUS_LED->blink_led[2].led.brightness_set = msm_pmic_bl_led_set;
-	STATUS_LED->blink_led[2].led.brightness = LED_OFF;
-	STATUS_LED->blink_led[2].blink_flag = 0;
-	STATUS_LED->blink_led[2].blink_on_time = 500;
-	STATUS_LED->blink_led[2].blink_off_time = 500;
-
 	spin_lock_init(&STATUS_LED->data_lock);
 
-	for (i = 0; i < 3; i++) {	/* red, green, amber */
+	for (i = 0; i < 2; i++) {	/* red, green */
 		ret = led_classdev_register(&pdev->dev, &STATUS_LED->blink_led[i].led);
 		if (ret) {
 			printk(KERN_ERR
@@ -388,7 +334,7 @@ static int msm_pmic_led_probe(struct platform_device *pdev)
 		}
 	}
 
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < 2; i++) {
 		ret =
 		    device_create_file(STATUS_LED->blink_led[i].led.dev, &dev_attr_blink);
 		if (ret) {
@@ -398,7 +344,7 @@ static int msm_pmic_led_probe(struct platform_device *pdev)
 		}
 	}
 
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < 2; i++) {
 		ret =
 		    device_create_file(STATUS_LED->blink_led[i].led.dev, &dev_attr_grppwm);
 		if (ret) {
@@ -408,7 +354,7 @@ static int msm_pmic_led_probe(struct platform_device *pdev)
 		}
 	}
 
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < 2; i++) {
 		ret =
 		    device_create_file(STATUS_LED->blink_led[i].led.dev, &dev_attr_grpfreq);
 		if (ret) {
@@ -419,7 +365,7 @@ static int msm_pmic_led_probe(struct platform_device *pdev)
 	}
 	dev_set_drvdata(&pdev->dev, STATUS_LED);
 	
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < 2; i++)
 	{
 	       INIT_WORK(&STATUS_LED->blink_led[i].work_led_on, func[i*2]);
 	       INIT_WORK(&STATUS_LED->blink_led[i].work_led_off, func[i*2+1]);
@@ -505,40 +451,22 @@ static int msm_pmic_led_suspend(struct platform_device *dev,
 	   msm_pmic_led_config_while_app2sleep( STATUS_LED->blink_led[0].led.brightness,//red
 	   										STATUS_LED->blink_led[1].led.brightness, ZTE_PROC_COMM_CMD3_NLED_BLINK_ENABLE);//green
 	   #endif
-
-	pr_crit(ZYF_BL_TAG "Set leds for suspend");
-
-#ifdef CONFIG_LED_SUSPEND_IMMEDIATE
-	for (i = 0; i < 3; i++) {
+       for (i = 0; i < 2; i++)
 		led_classdev_suspend(&STATUS_LED->blink_led[i].led);
-	}
-#elif defined(CONFIG_LED_SUSPEND_SOLID) || defined(CONFIG_LED_SUSPEND_SHORT)
-	for (i = 0; i < 3; i++) {
-		//we set the leds for suspend, but don't do anything on resume. We should restore the previous state at resume but since it looks like android resets the leds at resume it shouldn't matter.
-		if(STATUS_LED->blink_led[i].led.brightness > 0 || STATUS_LED->blink_led[i].blink_flag > 0) {
-			pr_crit(ZYF_BL_TAG "Set led %d on for suspend",i);
-			STATUS_LED->blink_led[i].blink_flag=0;
-			STATUS_LED->blink_led[i].led.brightness=16;
-		}
-	}
-	msleep(1000); //wait for LED to turn on
-#endif
 
 	return 0;
 }
 
 static int msm_pmic_led_resume(struct platform_device *dev)
 {
+       int i;
 	#ifdef CONFIG_ZTE_NLED_BLINK_WHILE_APP_SUSPEND
 	   msm_pmic_led_config_while_app2sleep( 0,0, ZTE_PROC_COMM_CMD3_NLED_BLINK_DISABLE);
 	#endif
+       for (i = 0; i < 2; i++)
+		led_classdev_resume(&STATUS_LED->blink_led[i].led);
+	
 
-#if defined(CONFIG_LED_SUSPEND_IMMEDIATE) || defined(CONFIG_LED_SUSPEND_SHORT)
-	int i;
-
-	for (i = 0; i < 3; i++)
-		 led_classdev_resume(&STATUS_LED->blink_led[i].led);
-#endif
 	return 0;
 }
 #else
